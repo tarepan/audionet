@@ -1,3 +1,5 @@
+from functional import seq
+
 from .feature_stat import getLogF0Stat, getMCEPStat
 from .features import convertWavIntoF0seqMCEPseq
 
