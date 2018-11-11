@@ -1,6 +1,23 @@
 import librosa
 import numpy as np
 
+def bias_phase(C, type="noise"):
+    bias = np.random.randn(C.shape[0], C.shape[1])
+    if type == "uniform":
+        # shift = 2.5
+        shift = np.random.rand()
+        bias.fill(shift)
+    if type == "channel_uniform":
+        for i in range(bias.shape[0]):
+            single_f_seq = bias[i:i+1, :]
+            single_f_seq.fill(np.random.rand())
+            bias[i:i+1, :] = single_f_seq
+    print(bias)
+    # rorate based on arg (*exp(j*arg))
+    return C * np.exp(1j*bias)
+
+
+
 def rainbowgram2wave(set, hop_length=512):
     normed_log_mag = set[0]
     normed_if_arg = set[1]
@@ -16,6 +33,7 @@ def rainbowgram2wave(set, hop_length=512):
     # 1. make (mag + 0j)
     # 2. rorate based on arg (*exp(j*arg))
     C = (mag + 0j) * np.exp(1j*arg)
+    # C = bias_phase(C, type="uniform")
     reconstructed_wave = librosa.core.istft(C, hop_length=512)
     return reconstructed_wave
 
