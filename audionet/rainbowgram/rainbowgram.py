@@ -1,8 +1,24 @@
-import os
 import librosa
 import numpy as np
-from scipy.io.wavfile import read as readwav
-import scipy
+
+def rainbowgram2wave(set, hop_length=512):
+    normed_log_mag = set[0]
+    normed_if_arg = set[1]
+
+    # normalized log magnitude => magnitude
+    mag = np.exp(normed_log_mag)
+
+    # normalized IF -> phase
+    if_arg = np.pi * normed_if_arg
+    phase_unwrapped = np.cumsum(if_arg, axis=1)
+    arg = phase_unwrapped
+
+    # 1. make (mag + 0j)
+    # 2. rorate based on arg (*exp(j*arg))
+    C = (mag + 0j) * np.exp(1j*arg)
+    reconstructed_wave = librosa.core.istft(C, hop_length=512)
+    return reconstructed_wave
+
 
 def wave2rainbowgram(wav, n_fft=1024, hop_length=512):
     """
@@ -10,19 +26,22 @@ def wave2rainbowgram(wav, n_fft=1024, hop_length=512):
     Args:
         wav (numpy.ndarray(n,)):
     Returns:
-        logPower ():
-        IF:
+        ndarray[2, 1 + n_fft/2, frame_num]: [mag&arg, frequency, time]
     """
-    # Transform
+    # time -> frequency Transform
     C = librosa.stft(wav, n_fft=n_fft, hop_length=hop_length)
-    # magnitude processing
-    mag = np.abs(C) # (freq, time)
-    ## intensity scaling
+    mag, arg = np.abs(C), np.angle(C, deg=False)
+    print(f"C: {C.shape}")
+    ## magnitude => intensity scaling mag
     logMag = np.log(mag)
-    max, min = logMag.max(), logMag.min()
-    mean = (max+min)/2
-    normedLogMag = (logMag - mean)/(max - mean)
-    ## frequency scaling
+    processed_mag = logMag
+
+    # max, min = logMag.max(), logMag.min()
+    # mean = (max+min)/2
+    # normedLogMag = (logMag - mean)/(max - mean)
+    # processed_mag = normedLogMag
+
+    # frequency scaling
     # melFilter = librosa.filters.mel(16000, 2048, n_mels=1025)
     # for i in range(0, 1025):
     #     print(melFilter[i:i+1,:].max())
@@ -33,14 +52,14 @@ def wave2rainbowgram(wav, n_fft=1024, hop_length=512):
     # print(f"dot produt dim: {melProcessedMag.shape}")
     # melLogScaledMag = np.pad(melProcessedMag, [(0,0), (0,2)], "constant", constant_values=-1)
     # melLogScaledMag = normedLogMag
-    # phase angle processing
+
     ## IF-nize
-    phase_unwrapped = np.unwrap(np.angle(C))
-    IF = phase_unwrapped[:, 1:] - phase_unwrapped[:, :-1] # finite difference
-    ## intensity scaling
-    scaled_IF = np.concatenate([phase_unwrapped[:, 0:1], IF], axis=1) / np.pi # (-pi ~ pi) => (-1, 1)
-    ## frequency scaling
-    return normedLogMag, scaled_IF
+    phase_unwrapped = np.unwrap(arg)
+    diff = np.diff(phase_unwrapped, n=1) # finite difference
+    if_arg = np.concatenate([phase_unwrapped[:,0:1], diff], axis=1)
+    normed_if_arg = if_arg/np.pi
+    processed_arg = normed_if_arg
+    return np.array([processed_mag, processed_arg])
 
 
 # path = "testaudio.wav"
