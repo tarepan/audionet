@@ -18,7 +18,7 @@ def bias_phase(C, type="noise"):
 
 
 
-def rainbowgram2wave(set, hop_length=512):
+def rainbowgram2wave(set, hop_length=256):
     normed_log_mag = set[0]
     normed_if_arg = set[1]
 
@@ -34,11 +34,11 @@ def rainbowgram2wave(set, hop_length=512):
     # 2. rorate based on arg (*exp(j*arg))
     C = (mag + 0j) * np.exp(1j*arg)
     # C = bias_phase(C, type="uniform")
-    reconstructed_wave = librosa.core.istft(C, hop_length=512)
+    reconstructed_wave = librosa.core.istft(C, hop_length=hop_length)
     return reconstructed_wave
 
 
-def wave2rainbowgram(wav, n_fft=1024, hop_length=512):
+def wave2rainbowgram(wav, n_fft=1024, hop_length=256):
     """
     Convert a wavefrom into frequency-domain time series
     Args:
