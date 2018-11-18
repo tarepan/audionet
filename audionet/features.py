@@ -18,6 +18,7 @@ def convertWavIntoF0seqMCEPseq(wav, fs, frame_period = 5.0, MCEPdim = 24):
     f0seq, timeaxis = pyworld.harvest(wav, fs, frame_period = frame_period, f0_floor = 71.0, f0_ceil = 800.0)
     spetrogram = pyworld.cheaptrick(wav, f0seq, timeaxis, fs)
     MCEPseq = pyworld.code_spectral_envelope(spetrogram, fs, MCEPdim)
+    print(f"F0&MCEP-nized! {wav.shape[0] / fs} [sec] wav => {f0seq.shape}, {MCEPseq.shape}")
     return f0seq, MCEPseq.T.astype(np.float32)
 
 def convertWavIntoFeatures(wav, fs, frame_period = 5.0, MCEPdim = 24):

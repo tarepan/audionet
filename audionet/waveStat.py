@@ -15,9 +15,18 @@ def waves2stats(wavelist, sr):
         logF0_mean, logF0_std, MCEP_mean, MCEP_std
     """
     # [np.ndarray(1,T)] => [(np.ndarray(1, frames), np.ndarray(24MCEPs, frames)]
-    sets = seq(wavelist).map(lambda waveform: convertWavIntoF0seqMCEPseq(waveform, sr))
-    f0seqs = sets.map(lambda set: set[0]).to_list()
-    MCEPseqs = sets.map(lambda set: set[1]).to_list()
+    f0seqs = []
+    MCEPseqs = []
+    cnt = 0
+    for waveform in wavelist:
+        f0seq, MCEPseq = convertWavIntoF0seqMCEPseq(waveform, sr)
+        f0seqs.append(f0seq)
+        MCEPseqs.append(MCEPseqs)
+        print(f"extract f0 & MCEP #{cnt}")
+        cnt+=1
+    print("finish extracting")
     logF0_mean, logF0_std = getLogF0Stat(f0seqs)
+    print("finish F0 stat analysis")
     MCEP_mean, MCEP_std = getMCEPStat(MCEPseqs)
+    print("finish MCEP stat analysis")
     return logF0_mean, logF0_std, MCEP_mean, MCEP_std
